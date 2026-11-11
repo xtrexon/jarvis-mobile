@@ -60,10 +60,39 @@
   const statusEl=document.getElementById('status');
   function reply(text){response.textContent=text;}
   function send(){
-    const value=input.value.trim(); if(!value)return;
-    reply('Komanda u pranua: "'+value+'". Inteligjenca artificiale do të lidhet në fazën e ardhshme.');
-    input.value='';
+    
+async function send(){
+  const value = input.value.trim();
+  if(!value) return;
+
+  input.value = '';
+  reply('JARVIS është duke menduar...');
+  statusEl.textContent = '● DUKE PUNUAR';
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ message: value })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Gabim në server.');
+    }
+
+    reply(data.reply || data.answer || data.message || 'JARVIS nuk mori përgjigje.');
+  } catch (error) {
+    reply('Nuk arrita të lidhem me inteligjencën artificiale. Kontrollo serverin.');
+    console.error(error);
+  } finally {
+    statusEl.textContent = '● GATI';
   }
+}
+
   document.getElementById('send').addEventListener('click',send);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
   document.getElementById('mic').addEventListener('click',()=>{
