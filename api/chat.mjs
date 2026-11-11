@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-5.4-mini",
-        instructions: "Ti je JARVIS, asistenti personal inteligjent. Përgjigju natyrshëm në gjuhën shqipe, me profesionalizëm dhe qartësi.",
+        instructions: "Ti je JARVIS, asistenti personal inteligjent. Përgjigju në shqip, natyrshëm, qartë dhe profesionalisht.",
         input: message
       })
     });
