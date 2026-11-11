@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="sq">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JARVIS">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>JARVIS</title>
+  <style>
+    :root{color-scheme:dark;--bg:#050b14;--panel:#0c1a2a;--cyan:#61d9ff;--muted:#8da9bd}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 34%,#102c43 0,#071321 42%,#03070d 100%);color:#eaf8ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:600px;margin:auto;min-height:100svh;padding:env(safe-area-inset-top) 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+    header{display:flex;justify-content:space-between;align-items:center;padding:22px 0 12px}
+    .brand{letter-spacing:.28em;font-size:14px;font-weight:700;color:var(--cyan)}
+    .status{font-size:11px;color:#8fe8bd;border:1px solid #235b51;border-radius:20px;padding:7px 10px}
+    .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:430px}
+    .orb-wrap{width:min(68vw,280px);aspect-ratio:1;position:relative;display:grid;place-items:center;margin:10px auto 28px}
+    .ring{position:absolute;inset:0;border:1px solid #49cfff55;border-radius:50%;box-shadow:0 0 35px #16a9e533,inset 0 0 35px #16a9e522;animation:spin 18s linear infinite}
+    .ring:before,.ring:after{content:"";position:absolute;border:1px dashed #5bdcff77;border-radius:50%;inset:14px}
+    .ring:after{inset:31px;border-style:solid;opacity:.55}
+    .orb{width:48%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d8fbff,#50c9f5 18%,#12618b 48%,#061629 75%);box-shadow:0 0 28px #42cfff,0 0 85px #159bd766,inset -12px -14px 24px #020b19;animation:pulse 3s ease-in-out infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{50%{transform:scale(1.06);box-shadow:0 0 42px #42cfff,0 0 105px #159bd799}}
+    h1{font-size:28px;letter-spacing:.16em;margin:0 0 9px}
+    .sub{font-size:13px;color:var(--muted);line-height:1.6;max-width:300px}
+    .response{width:100%;min-height:54px;margin:22px 0 12px;padding:14px 16px;border:1px solid #28516b;border-radius:16px;background:#081827bb;color:#d8f4ff;text-align:left;font-size:14px;line-height:1.5}
+    .controls{display:flex;gap:10px;width:100%;margin-top:8px}
+    input{min-width:0;flex:1;background:#0b1b2b;border:1px solid #24445d;border-radius:14px;padding:15px;color:white;font-size:16px;outline:none}
+    button{border:1px solid #48c9f5;background:#0d3550;color:#eafaff;border-radius:14px;padding:0 17px;font-size:14px;font-weight:650}
+    .mic{width:68px;height:68px;border-radius:50%;margin:18px 0 5px;background:linear-gradient(145deg,#174e70,#071b2d);font-size:25px;box-shadow:0 0 25px #2ab8e955}
+    .hint{font-size:11px;color:#7694a9;margin-top:10px}
+    footer{text-align:center;color:#5d7d92;font-size:10px;letter-spacing:.12em;padding-top:20px}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="brand">J.A.R.V.I.S.</div><div class="status" id="status">● GATI</div></header>
+  <section class="center">
+    <div class="orb-wrap"><div class="ring"></div><div class="orb"></div></div>
+    <h1>JARVIS</h1>
+    <div class="sub">Asistenti yt personal<br>Inteligjencë • Komunikim • Kontroll</div>
+    <div class="response" id="response">Përshëndetje! Unë jam JARVIS. Shkruaj një komandë ose provo mikrofonin.</div>
+    <button class="mic" id="mic" aria-label="Aktivizo mikrofonin">🎙</button>
+    <div class="hint">Shtyp mikrofonin për të folur</div>
+    <div class="controls">
+      <input id="command" type="text" placeholder="Shkruaj komandën..." autocomplete="off">
+      <button id="send">Dërgo</button>
+    </div>
+  </section>
+  <footer>PROJECT JARVIS · MOBILE INTERFACE · VERSION 0.1</footer>
+</main>
+<script>
+  const response=document.getElementById('response');
+  const input=document.getElementById('command');
+  const statusEl=document.getElementById('status');
+  function reply(text){response.textContent=text;}
+  function send(){
+    const value=input.value.trim(); if(!value)return;
+    reply('Komanda u pranua: "'+value+'". Inteligjenca artificiale do të lidhet në fazën e ardhshme.');
+    input.value='';
+  }
+  document.getElementById('send').addEventListener('click',send);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+  document.getElementById('mic').addEventListener('click',()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){reply('Njohja e zërit nuk mbështetet nga ky shfletues. Mund të përdorësh komandat me tekst në këtë version.');return;}
+    const rec=new SR(); rec.lang='sq-AL'; rec.interimResults=false;
+    statusEl.textContent='● PO DËGJOJ';
+    rec.onresult=e=>{input.value=e.results[0][0].transcript;send();};
+    rec.onerror=()=>reply('Mikrofoni nuk u aktivizua. Kontrollo lejen e mikrofonit në Safari.');
+    rec.onend=()=>statusEl.textContent='● GATI';
+    try{rec.start();}catch(e){statusEl.textContent='● GATI';reply('Provo përsëri të aktivizosh mikrofonin.');}
+  });
+  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
