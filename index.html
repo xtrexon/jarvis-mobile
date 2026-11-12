@@ -54,58 +54,116 @@
   </section>
   <footer>PROJECT JARVIS · MOBILE INTERFACE · VERSION 0.1</footer>
 </main>
+
 <script>
-  const response=document.getElementById('response');
-  const input=document.getElementById('command');
-  const statusEl=document.getElementById('status');
-  function reply(text){response.textContent=text;}
-  function send(){
-    
-async function send(){
-  const value = input.value.trim();
-  if(!value) return;
+  const response = document.getElementById('response');
+  const input = document.getElementById('command');
+  const statusEl = document.getElementById('status');
+  const sendBtn = document.getElementById('send');
 
-  input.value = '';
-  reply('JARVIS është duke menduar...');
-  statusEl.textContent = '● DUKE PUNUAR';
+  function reply(text) {
+    response.textContent = text;
+  }
 
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ message: value })
-    });
+  async function send() {
+    const value = input.value.trim();
+    if (!value) return;
 
-    const data = await res.json();
+    sendBtn.disabled = true;
+    input.disabled = true;
 
-    if (!res.ok) {
-      throw new Error(data.error || 'Gabim në server.');
+    reply('JARVIS është duke menduar...');
+    statusEl.textContent = '● DUKE PUNUAR';
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: value })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Gabim në server.');
+      }
+
+      reply(
+        data.answer ||
+        data.reply ||
+        data.message ||
+        'JARVIS nuk mori përgjigje.'
+      );
+
+      input.value = '';
+
+    } catch (error) {
+      console.error('JARVIS ERROR:', error);
+      reply('Gabim në lidhje: ' + error.message);
+
+    } finally {
+      sendBtn.disabled = false;
+      input.disabled = false;
+      statusEl.textContent = '● GATI';
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', send);
+
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') send();
+  });
+
+  document.getElementById('mic').addEventListener('click', () => {
+    const SR = window.SpeechRecognition ||
+               window.webkitSpeechRecognition;
+
+    if (!SR) {
+      reply('Njohja e zërit nuk mbështetet nga ky shfletues.');
+      return;
     }
 
-    reply(data.reply || data.answer || data.message || 'JARVIS nuk mori përgjigje.');
-  } catch (error) {
-    reply('Nuk arrita të lidhem me inteligjencën artificiale. Kontrollo serverin.');
-    console.error(error);
-  } finally {
-    statusEl.textContent = '● GATI';
-  }
-}
+    const rec = new SR();
+    rec.lang = 'sq-AL';
+    rec.interimResults = false;
 
-  document.getElementById('send').addEventListener('click',send);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
-  document.getElementById('mic').addEventListener('click',()=>{
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){reply('Njohja e zërit nuk mbështetet nga ky shfletues. Mund të përdorësh komandat me tekst në këtë version.');return;}
-    const rec=new SR(); rec.lang='sq-AL'; rec.interimResults=false;
-    statusEl.textContent='● PO DËGJOJ';
-    rec.onresult=e=>{input.value=e.results[0][0].transcript;send();};
-    rec.onerror=()=>reply('Mikrofoni nuk u aktivizua. Kontrollo lejen e mikrofonit në Safari.');
-    rec.onend=()=>statusEl.textContent='● GATI';
-    try{rec.start();}catch(e){statusEl.textContent='● GATI';reply('Provo përsëri të aktivizosh mikrofonin.');}
+    statusEl.textContent = '● PO DËGJOJ';
+
+    rec.onresult = event => {
+      input.value = event.results[0][0].transcript;
+      send();
+    };
+
+    rec.onerror = () => {
+      reply('Mikrofoni nuk u aktivizua. Kontrollo lejet në Safari.');
+      statusEl.textContent = '● GATI';
+    };
+
+    rec.onend = () => {
+      if (!sendBtn.disabled) {
+        statusEl.textContent = '● GATI';
+      }
+    };
+
+    try {
+      rec.start();
+    } catch (error) {
+      statusEl.textContent = '● GATI';
+      reply('Provo përsëri të aktivizosh mikrofonin.');
+    }
   });
-  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(error => {
+        console.error('Service Worker:', error);
+      });
+    });
+  }
 </script>
+
 </body>
 </html>
